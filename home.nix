@@ -51,6 +51,7 @@
     nixfmt-rfc-style
     wl-clipboard
     glab
+		yamlfmt
 
     inputs.nix-search.packages.${pkgs.system}.default
   ];
@@ -103,4 +104,9 @@
         (builtins.readFile "${inputs.dotfiles}/Scripts/nix/cfg/foot/foot.ini")
     )
   );
+
+  dconf.settings."org/gnome/desktop/peripherals/keyboard" = {
+    delay = 200;
+    repeat-interval = 20;
+  };
 }
