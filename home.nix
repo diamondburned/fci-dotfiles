@@ -51,7 +51,7 @@
     nixfmt-rfc-style
     wl-clipboard
     glab
-		yamlfmt
+    nodePackages.prettier
 
     inputs.nix-search.packages.${pkgs.system}.default
   ];
@@ -74,7 +74,12 @@
   programs.bash = {
     enable = true;
     enableVteIntegration = true;
-    bashrcExtra = builtins.readFile ./bashrc;
+    bashrcExtra = lib.concatStringsSep "" (
+      map builtins.readFile [
+        ./bashrc
+        ./k8s-prompt
+      ]
+    );
     historyFileSize = 1000000;
     historySize = 100000;
     shellAliases = {

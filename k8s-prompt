@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+__color_prompt=${__color_prompt:-yes}
+__current_prompt=
+__draw_prompt() {
+	local p
+
+	[[ "$__color_prompt" ]] && p+=$'\033[02m'
+	p+="> "
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	# User@Host part
+	[[ "$__color_prompt" ]] && p+=$'\033[01;32m'
+	p+="${USER}@${HOSTNAME%%.*}"
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	# colon
+	[[ "$__color_prompt" ]] && p+=$'\033[02m'
+	p+=' : '
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	# current directory
+	[[ "$__color_prompt" ]] && p+=$'\033[32m'
+	p+="${PWD/#$HOME/~}"
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	# jobs
+	[[ "$__color_prompt" ]] && p+=$'\033[31m'
+	__njobs=$(jobs -p | wc -l)
+	[[ $__njobs -gt 0 ]] && {
+		p+=" [${__njobs} job"
+		[[ $__njobs -gt 1 ]] && p+="s"
+		p+="]"
+	}
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	# chroot
+	p+="${debian_chroot:+ ($debian_chroot)}"
+
+	# KUBECONFIG part
+	[[ "$__color_prompt" ]] && p+=$'\033[34m'
+	p+="${KUBECONFIG:+ (K8s: $(basename "$KUBECONFIG"))}"
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	p+=$'\n'
+
+	# dollar sign
+	[[ "$__color_prompt" ]] && p+=$'\033[02m'
+	p+='$ '
+	[[ "$__color_prompt" ]] && p+=$'\033[00m'
+
+	__current_prompt="$p"
+}
+
+PROMPT_COMMAND='__draw_prompt'
+PS1='$__current_prompt'
