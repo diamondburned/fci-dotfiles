@@ -38,3 +38,16 @@ gm() {
 }
 
 alias gamend="git commit --amend"
+
+set-title() {
+	local p
+	p="${1:-$(basename "$PWD")/}"
+	# Sanitize the title by stripping control characters.
+	p="${p//[^[:print:]]/}"
+	p="${p//\\/\\\\}"
+	echo -ne "\033]0;$p\007"
+	# echo -ne "\033]0;${1//[^[:print:]]/}\007"
+}
+
+PROMPT_PRIMARY_COLOR=35
+PROMPT_SECONDARY_COLOR=95

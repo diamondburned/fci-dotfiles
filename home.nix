@@ -6,6 +6,10 @@
   ...
 }:
 
+let
+  importOrDefault = file: default: if builtins.pathExists file then import file else default;
+in
+
 {
   imports = [
     "${inputs.dotfiles}/Scripts/nix/cfg/gtk/home.nix"
@@ -74,12 +78,19 @@
   programs.bash = {
     enable = true;
     enableVteIntegration = true;
-    bashrcExtra = lib.concatStringsSep "" (
-      map builtins.readFile [
-        ./bashrc
-        ./k8s-prompt
-      ]
-    );
+    bashrcExtra =
+      (builtins.readFile ./bashrc)
+      + (
+        with lib;
+        with builtins;
+        concatStringsSep "" (
+          (map (f: builtins.readFile "${./bash-modules}/${f}") (
+            mapAttrsToList (name: type: name) (
+              filterAttrs (name: type: type == "regular") (builtins.readDir ./bash-modules)
+            )
+          ))
+        )
+      );
     historyFileSize = 1000000;
     historySize = 100000;
     shellAliases = {
@@ -113,5 +124,12 @@
   dconf.settings."org/gnome/desktop/peripherals/keyboard" = {
     delay = 200;
     repeat-interval = 20;
+  };
+
+  programs.ssh = {
+    enable = true;
+    compression = true;
+    hashKnownHosts = true;
+    matchBlocks = (importOrDefault ./secret-ssh.nix { }) // { };
   };
 }

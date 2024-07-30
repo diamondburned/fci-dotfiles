@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+KUBECONF_CONFIG_DIR="${XDG_CONFIG_HOME:-"$HOME/.config"}/kubeconf"
+KUBECONF_KNOWN_CONFIGS="$KUBECONF_CONFIG_DIR/known_configs"
+
+kubeconf() {
+	case "$1" in
+	a|add)
+		_kubeconf::add "${@:2}"
+		;;
+	u|use)
+		_kubeconf::use "$2"
+		;;
+	e|edit)
+		_kubeconf::edit
+		;;
+	ls|list)
+		_kubeconf::list
+		;;
+	*)
+		_kubeconf::usage
+		;;
+	esac
+}
+
+_kubeconf::usage() {
+	cat<<EOF
+kubeconf is a program that assists in managing multiple kubeconfigs.
+It remembers where kubeconfigs are and allows switching between them.
+
+Usage:
+	kubeconf a|add   - Add a kubeconfig file.
+	kubeconf a|use   - Switch to the kubeconfig file.
+	kubeconf e|edit  - Edit list of known kubeconfig files.
+	kubeconf ls|list - List known kubeconfig files.
+EOF
+}
+
+_kubeconf::add() {
+	mkdir -p "$KUBECONF_CONFIG_DIR"
+
+	declare -A kubeconfig_known_configs
+	while read -r f; do
+		kubeconfig_known_configs["$(basename "$f")"]="$f"
+	done < <(_kubeconf::known_configs)
+
+	local p
+	local n
+
+	for f in "$@"; do
+		p="$(realpath "$f")"
+		if [[ ! -f "$p" ]]; then
+			echo "File $f does not exist." >&2
+			return 1
+		fi
+
+		n="$(basename "$p")"
+		if [[ "${kubeconfig_known_configs["$n"]}" ]]; then
+			echo "Name $n is already known." >&2
+			return 1
+		fi
+
+		echo "$p" >> "$KUBECONF_KNOWN_CONFIGS"
+	done
+}
+
+_kubeconf::use() {
+	local f
+
+	while read -r f; do
+		if [[ "$1" == "$f" || "$1" == "$(basename "$f")" ]]; then
+			export KUBECONFIG="$f"
+			return
+		fi
+	done < <(_kubeconf::known_configs)
+
+	printf "Kubeconfig %q not found.\n" "$1" >&2
+	return 1
+}
+
+_kubeconf::list() {
+	local f
+	echo "Known kubeconfigs:"
+	_kubeconf::known_configs | while read -r f; do
+		echo "  - $(basename "$f"): $f"
+	done
+}
+
+_kubeconf::edit() {
+	"${EDITOR:-vim}" "$KUBECONF_KNOWN_CONFIGS"
+}
+
+_kubeconf::known_configs() {
+	if [[ ! -f "$KUBECONF_KNOWN_CONFIGS" ]]; then
+		return
+	fi
+
+	cat "$KUBECONF_KNOWN_CONFIGS" | while read -r f; do
+		if [[ -f "$f" ]]; then
+			echo "$f"
+		fi
+	done
+}
+
+_kubeconf::known_config_names() {
+	_kubeconf::known_configs | while read -r f; do
+		echo "$(basename "$f")"
+	done
+}
+
+_kubeconf::compgen() {
+	local curr prev
+	curr="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	case "$COMP_CWORD" in
+	1)
+		COMPREPLY=( $(compgen -W "add use edit list" -- "$curr") )
+		;;
+	2)
+		case "$prev" in
+		a|add)
+			COMPREPLY=( $(compgen -f -- "$curr") )
+			;;
+		u|use)
+			COMPREPLY=( $(compgen -W "$(_kubeconf::known_config_names)" -- "$curr") )
+			;;
+		*)
+			COMPREPLY=()
+		esac
+		;;
+	esac
+}
+
+complete -F _kubeconf::compgen kubeconf

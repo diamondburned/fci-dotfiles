@@ -10,7 +10,7 @@ __draw_prompt() {
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
 	# User@Host part
-	[[ "$__color_prompt" ]] && p+='\[\033[01;32m\]'
+	[[ "$__color_prompt" ]] && p+="\[\033[01;${PROMPT_PRIMARY_COLOR:=32}m\]"
 	p+="${USER}@${HOSTNAME%%.*}"
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
@@ -20,7 +20,7 @@ __draw_prompt() {
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
 	# current directory
-	[[ "$__color_prompt" ]] && p+='\[\033[32m\]'
+	[[ "$__color_prompt" ]] && p+="\[\033[00;${PROMPT_SECONDARY_COLOR:=32}m\]"
 	p+="${PWD/#$HOME/~}"
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
