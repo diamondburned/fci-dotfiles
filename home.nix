@@ -17,9 +17,13 @@ in
     "${inputs.dotfiles}/Scripts/nix/cfg/foot/home.nix"
     "${inputs.dotfiles}/Scripts/nix/cfg/nvim/home.nix"
     "${inputs.dotfiles}/Scripts/nix/cfg/zellij/home.nix"
+    ./secret-ssh.nix
   ];
 
-  nixpkgs.overlays = [ (import "${inputs.dotfiles}/Scripts/nix/overlays/overrides-all.nix") ];
+  nixpkgs.overlays = [
+    (import "${inputs.dotfiles}/Scripts/nix/overlays/overrides-all.nix")
+    (inputs.nixgl.overlay)
+  ];
   nixpkgs.config.allowUnfree = true;
 
   # Retain Nix channels compatibility.
@@ -37,7 +41,7 @@ in
     };
   };
 
-  gtk.font.name = lib.mkForce "Cantarell";
+  gtk.font.name = lib.mkForce "Lato";
 
   xdg.configFile."nvim/arts" = lib.mkForce {
     source = "${inputs.dotfiles}/Scripts/nix/static/arts";
@@ -54,10 +58,19 @@ in
   home.packages = with pkgs; [
     nixfmt-rfc-style
     wl-clipboard
+		croc
     glab
+		yq-go
     nodePackages.prettier
 
     inputs.nix-search.packages.${pkgs.system}.default
+
+    go
+    gopls
+    gotools
+
+    nixgl.nixGLIntel
+    nixgl.nixVulkanIntel
   ];
 
   home.file = { };
@@ -65,6 +78,8 @@ in
   home.sessionVariables = {
     GTK_IM_MODULE = "fcitx";
     QT_QPA_PLATFORM = "wayland";
+    RIPGREP_CONFIG_PATH = "${config.home.homeDirectory}/.config/ripgrep/ripgreprc";
+    GOBIN = "${config.home.homeDirectory}/.go/bin";
   };
 
   # Let Home Manager install and manage itself.
@@ -79,21 +94,24 @@ in
     enable = true;
     enableVteIntegration = true;
     bashrcExtra =
-      (builtins.readFile ./bashrc)
-      + (
-        with lib;
-        with builtins;
-        concatStringsSep "" (
-          (map (f: builtins.readFile "${./bash-modules}/${f}") (
-            mapAttrsToList (name: type: name) (
-              filterAttrs (name: type: type == "regular") (builtins.readDir ./bash-modules)
-            )
-          ))
-        )
-      );
+      with lib;
+      with builtins;
+      concatStringsSep "\n" (flatten [
+        (builtins.readFile ./bashrc)
+        (map (f: builtins.readFile "${./bash-modules}/${f}") (
+          mapAttrsToList (name: type: name) (
+            filterAttrs (name: type: type == "regular") (builtins.readDir ./bash-modules)
+          )
+        ))
+        ''
+          export PATH="$PATH:${./bin}"
+        ''
+      ]);
     historyFileSize = 1000000;
     historySize = 100000;
     shellAliases = {
+      "vfzf" = "vim $(fzf)";
+      "ag" = "rg";
       "ll" = "ls -la";
       "l" = "ls";
     };
@@ -123,13 +141,27 @@ in
 
   dconf.settings."org/gnome/desktop/peripherals/keyboard" = {
     delay = 200;
-    repeat-interval = 20;
+    repeat-interval = 25;
   };
 
   programs.ssh = {
     enable = true;
     compression = true;
     hashKnownHosts = true;
-    matchBlocks = (importOrDefault ./secret-ssh.nix { }) // { };
+  };
+
+  programs.fzf = {
+    enable = true;
+  };
+
+  programs.ripgrep = {
+    enable = true;
+    arguments = [
+      "--glob=!vendor" # Ignore Go vendor directories always.
+      "--glob=!.git"
+      "--max-columns=150"
+      "--max-columns-preview"
+      "--smart-case"
+    ];
   };
 }

@@ -51,3 +51,9 @@ set-title() {
 
 PROMPT_PRIMARY_COLOR=35
 PROMPT_SECONDARY_COLOR=95
+
+gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 25
+gsettings set org.gnome.desktop.peripherals.keyboard delay 200
+
+export GOBIN=${GOBIN:-$GOPATH/bin}
+export PATH="$PATH:$GOBIN"

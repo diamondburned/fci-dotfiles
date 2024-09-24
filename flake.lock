@@ -49,6 +49,21 @@
         "type": "github"
       }
     },
+    "flake-utils_2": {
+      "locked": {
+        "lastModified": 1659877975,
+        "narHash": "sha256-zllb8aq3YO3h8B/U0/J1WBgAL8EX5yWf5pMj3G0NAmc=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "c0e246b9b83f637f4681389ecabcb2681b4f3af0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -76,16 +91,37 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1721032535,
-        "narHash": "sha256-fsOEYRFeZjvLwedmUtkm9LbeTUox4cQc540oiikpJTc=",
+        "lastModified": 1722271131,
+        "narHash": "sha256-JQ+BMg2e7BLej+P2CDVSAX5AzADg+4LYFmd+r2Yae9E=",
         "owner": "diamondburned",
         "repo": "nix-search",
-        "rev": "ab75c61cd01e3afe1f5dd4fc9e9e25f459aeb976",
+        "rev": "607da43a32cfeb6a4e33ee76a0e166202fa85281",
         "type": "github"
       },
       "original": {
         "owner": "diamondburned",
         "repo": "nix-search",
+        "type": "github"
+      }
+    },
+    "nixgl": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1713543440,
+        "narHash": "sha256-lnzZQYG0+EXl/6NkGpyIz+FEOc/DSEG57AP1VsdeNrM=",
+        "owner": "nix-community",
+        "repo": "nixGL",
+        "rev": "310f8e49a149e4c9ea52f1adf70cdc768ec53f8a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixGL",
         "type": "github"
       }
     },
@@ -126,6 +162,7 @@
         "dotfiles": "dotfiles",
         "home-manager": "home-manager",
         "nix-search": "nix-search",
+        "nixgl": "nixgl",
         "nixpkgs": "nixpkgs_2"
       }
     },

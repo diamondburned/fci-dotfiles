@@ -1,9 +1,28 @@
 #!/usr/bin/env bash
 
+__has_git_ps1=
+command -v __git_ps1 > /dev/null && __has_git_ps1=yes
+
 __color_prompt=${__color_prompt:-yes}
 __current_prompt=
+
+__last_pwd=
+__last_isfuse=
+
 __draw_prompt() {
 	local p
+	local isfuse
+
+	if [[ "$__last_pwd" == "$PWD" ]]; then
+		isfuse=$__last_isfuse
+	else
+		if [[ "$(stat -f -c "%T" .)" == fuseblk ]]; then
+			isfuse=yes
+		fi
+
+		__last_pwd=$PWD
+		__last_isfuse=$isfuse
+	fi
 
 	[[ "$__color_prompt" ]] && p+='\[\033[02m\]'
 	p+="> "
@@ -27,22 +46,31 @@ __draw_prompt() {
 	# jobs
 	[[ "$__color_prompt" ]] && p+='\[\033[31m\]'
 	__njobs=$(jobs -p | wc -l)
-	[[ $__njobs -gt 0 ]] && {
-		p+=" [${__njobs} job"
-		[[ $__njobs -gt 1 ]] && p+="s"
-		p+="]"
-	}
+	[[ $__njobs -gt 0 ]] && p+=" [${__njobs}]"
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
 	# chroot
-	p+="${debian_chroot:+ ($debian_chroot)}"
+	p+="${debian_chroot:+ (chroot: $debian_chroot)}"
 
 	# KUBECONFIG part
-	[[ "$__color_prompt" ]] && p+='\[\033[34m\]'
-	p+="${KUBECONFIG:+ (K8s: $(basename "$KUBECONFIG"))}"
+	[[ "$__color_prompt" ]] && p+='\[\033[94m\]'
+	p+="${KUBECONFIG:+ (k8s: $(basename "$KUBECONFIG"))}"
 	[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
 
-	p+=$'\n'
+	# git branch, pretty slow
+	if [[ ! "$isfuse" ]]; then
+		[[ "$__color_prompt" ]] && p+='\[\033[33m\]'
+		[[ "$__has_git_ps1" ]] && p+="$(__git_ps1 ' (git: %s)')"
+		[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
+	fi
+
+	if [[ "$isfuse" ]]; then
+		[[ "$__color_prompt" ]] && p+='\[\033[31m\]'
+		p+=" (remote)"
+		[[ "$__color_prompt" ]] && p+='\[\033[00m\]'
+	fi
+
+	p+=$'\r\n'
 
 	# dollar sign
 	[[ "$__color_prompt" ]] && p+='\[\033[02m\]'
@@ -52,4 +80,5 @@ __draw_prompt() {
 	PS1="$p"
 }
 
+shopt -s checkwinsize
 PROMPT_COMMAND='__draw_prompt'

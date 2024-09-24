@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+read -r _ _ _ brightness _ < <(ddcutil getvcp 10 --brief)
+brightness=$(zenity \
+	--scale \
+	--text=DDC/CI\ Brightness \
+	--min-value=1 \
+	--max-value=100 \
+	--value=$brightness \
+	--step=1)
+ddcutil setvcp 10 $brightness

@@ -14,6 +14,9 @@ kubeconf() {
 	e|edit)
 		_kubeconf::edit
 		;;
+	c|clear)
+		_kubeconf::clear
+		;;
 	ls|list)
 		_kubeconf::list
 		;;
@@ -32,6 +35,7 @@ Usage:
 	kubeconf a|add   - Add a kubeconfig file.
 	kubeconf a|use   - Switch to the kubeconfig file.
 	kubeconf e|edit  - Edit list of known kubeconfig files.
+	kubeconf c|clear - Clear current kubeconfig.
 	kubeconf ls|list - List known kubeconfig files.
 EOF
 }
@@ -88,6 +92,10 @@ _kubeconf::list() {
 
 _kubeconf::edit() {
 	"${EDITOR:-vim}" "$KUBECONF_KNOWN_CONFIGS"
+}
+
+_kubeconf::clear() {
+	unset KUBECONFIG
 }
 
 _kubeconf::known_configs() {
